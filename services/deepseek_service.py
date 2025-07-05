@@ -15,6 +15,7 @@ def deepseek_request( # Переименованная функция
     """
     Отправляет запрос к Deepseek Chat API и возвращает сгенерированный текст или структурированный JSON.
     Включает попытку парсинга Markdown-подобного текстового вывода в случае, если модель не возвращает строгий JSON.
+    Установлен таймаут для предотвращения зависаний.
     """
     if not DEEPSEEK_API_KEY:
         return "Ошибка: Deepseek API ключ не установлен."
@@ -45,7 +46,8 @@ def deepseek_request( # Переименованная функция
         }
 
     try:
-        response = requests.post(DEEPSEEK_API_URL, headers=headers, data=json.dumps(payload))
+        # Устанавливаем таймаут для запроса (в данном случае 120 секунд)
+        response = requests.post(DEEPSEEK_API_URL, headers=headers, data=json.dumps(payload), timeout=120)
         response.raise_for_status()
 
         response_data = response.json()
@@ -112,14 +114,19 @@ def deepseek_request( # Переименованная функция
         else:
             return f"Ошибка Deepseek API: Неожиданный формат ответа: {response_data}"
 
-    except requests.exceptions.HTTPError as http_err:
-        return f"Ошибка HTTP при запросе к Deepseek: {http_err} - {response.text}"
-    except requests.exceptions.ConnectionError as conn_err:
-        return f"Ошибка подключения к Deepseek: {conn_err}"
     except requests.exceptions.Timeout as timeout_err:
-        return f"Таймаут запроса к Deepseek: {timeout_err}"
+        print(f"Таймаут запроса к Deepseek: {timeout_err}")
+        return f"Ошибка: Запрос к Deepseek превысил таймаут ({timeout_err}). Попробуйте позже."
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Ошибка HTTP при запросе к Deepseek: {http_err} - {response.text}")
+        return f"Ошибка HTTP при запросе к Deepseek: {http_err}"
+    except requests.exceptions.ConnectionError as conn_err:
+        print(f"Ошибка подключения к Deepseek: {conn_err}")
+        return f"Ошибка подключения к Deepseek: {conn_err}"
     except requests.exceptions.RequestException as req_err:
+        print(f"Общая ошибка запроса к Deepseek: {req_err}")
         return f"Общая ошибка запроса к Deepseek: {req_err}"
     except Exception as e:
+        print(f"Неизвестная ошибка при работе с Deepseek: {e}")
         return f"Неизвестная ошибка при работе с Deepseek: {e}"
 
