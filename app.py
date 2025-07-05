@@ -1,13 +1,13 @@
 # app.py
 import asyncio
 from telegram.ext import Application, MessageHandler, filters, CommandHandler
-from telegram import Update # Bot больше не нужно импортировать явно здесь
+from telegram import Update
 from config.settings import TELEGRAM_BOT_TOKEN, PRIVATE_GROUP_CHAT_ID, LOGGING_BOT_TOKEN, LOGGING_CHAT_ID
 from handlers.message_handler import handle_message
 from handlers.commands_handler import handle_stats_command, handle_zero_command
-# from services.telegram_logger import logging_bot as telegram_logger_bot # Больше не нужен прямой импорт глобального бота здесь
 
-async def main():
+# Изменено: main теперь не асинхронная функция, так как run_polling() блокирует выполнение
+def main():
     """Запускает объединенного Telegram-бота."""
     # Проверяем, что токены и ID группы установлены
     if not TELEGRAM_BOT_TOKEN:
@@ -24,13 +24,14 @@ async def main():
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     print("Бот инициализирован.")
 
-    try:
-        print("Вызов initialize() для бота...")
-        await application.initialize()
-        print("Бот инициализирован успешно.")
-    except Exception as e:
-        print(f"Ошибка при инициализации бота: {e}")
-        return
+    # initialize() вызывается автоматически при run_polling(), поэтому явный вызов здесь не нужен.
+    # try:
+    #     print("Вызов initialize() для бота...")
+    #     await application.initialize()
+    #     print("Бот инициализирован успешно.")
+    # except Exception as e:
+    #     print(f"Ошибка при инициализации бота: {e}")
+    #     return
 
     # Регистрируем обработчик для текстовых сообщений (НЕ команд)
     # Это предотвратит обработку команд как обычных сообщений
@@ -46,23 +47,22 @@ async def main():
 
     print("Запуск прослушивания новых сообщений для бота...")
     try:
-        # Запускаем один Application
-        await application.start()
-        print("Бот запущен.")
+        # Запускаем Application в режиме опроса.
+        # Этот метод блокирует выполнение до тех пор, пока бот не будет остановлен (например, Ctrl+C).
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
+        print("Бот остановлен.") # Эта строка выполнится после остановки бота
     except Exception as e:
         print(f"Ошибка при запуске бота: {e}")
-        return
+    finally:
+        print("Бот завершил работу.")
 
-    print("Бот запущен. Ожидание сообщений...")
-    # Эта строка будет держать цикл событий активным, пока бот работает.
-    await asyncio.Future()
 
 if __name__ == '__main__':
     try:
-        # Запускаем асинхронную функцию main
-        asyncio.run(main())
+        # Изменено: теперь вызываем main() напрямую, так как run_polling() не является асинхронным
+        main()
     except KeyboardInterrupt:
-        print("Бот остановлен пользователем.")
+        print("Бот остановлен пользователем (KeyboardInterrupt).")
     except Exception as e:
         print(f"Произошла непредвиденная ошибка во время выполнения: {e}")
 
