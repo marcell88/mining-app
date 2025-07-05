@@ -6,7 +6,7 @@ from config.settings import DEEPSEEK_API_KEY
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
-def initial_filtration(
+def deepseek_request( # Переименованная функция
     prompt: str,
     model: str = "deepseek-chat",
     max_tokens: int = 500,

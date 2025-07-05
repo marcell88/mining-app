@@ -2,7 +2,7 @@
 from telegram.ext import Application, CommandHandler
 from telegram import Update
 from config.settings import LOGGING_BOT_TOKEN
-from handlers.message_handler import handle_stats_command, handle_zero_command # Только обработчики команд
+from handlers.commands_handler import handle_stats_command, handle_zero_command # Изменено: импорт из нового модуля
 
 def main():
     """Запускает Telegram-бот для логирования и статистики."""
