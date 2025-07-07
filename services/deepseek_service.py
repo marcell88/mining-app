@@ -4,7 +4,7 @@ import json
 import re
 from config.settings import DEEPSEEK_API_KEY
 
-DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_API_URL = "[https://api.deepseek.com/chat/completions](https://api.deepseek.com/chat/completions)"
 
 def deepseek_request(
     prompt: str,
@@ -56,12 +56,16 @@ def deepseek_request(
             content = response_data["choices"][0]["message"]["content"].strip()
             
             if response_schema:
-                # 1. Попытка очистить от markdown-кодовых блоков (```json ... ```)
+                # Более гибкая попытка очистить от markdown-кодовых блоков
                 content_to_parse = content
-                if content.startswith("```json") and content.endswith("```"):
-                    content_to_parse = content[len("```json"): -len("```")].strip()
-                elif content.startswith("```") and content.endswith("```"):
-                    content_to_parse = content[len("```"): -len("```")].strip()
+                if content_to_parse.startswith("```json"):
+                    content_to_parse = content_to_parse[len("```json"):].strip()
+                elif content_to_parse.startswith("```"):
+                    content_to_parse = content_to_parse[len("```"):].strip()
+                
+                # Удаляем закрывающий блок, если он есть
+                if content_to_parse.endswith("```"):
+                    content_to_parse = content_to_parse[:-len("```")].strip()
 
                 try:
                     # 2. Попытка декодировать как строгий JSON
@@ -129,3 +133,4 @@ def deepseek_request(
     except Exception as e:
         print(f"Неизвестная ошибка при работе с Deepseek: {e}")
         return f"Неизвестная ошибка при работе с Deepseek: {e}"
+
