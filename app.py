@@ -6,7 +6,6 @@ from config.settings import TELEGRAM_BOT_TOKEN, PRIVATE_GROUP_CHAT_ID, LOGGING_B
 from handlers.message_handler import handle_message
 from handlers.commands_handler import handle_stats_command, handle_zero_command
 
-# Изменено: main теперь не асинхронная функция, так как run_polling() блокирует выполнение
 def main():
     """Запускает объединенного Telegram-бота."""
     # Проверяем, что токены и ID группы установлены
@@ -24,14 +23,8 @@ def main():
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     print("Бот инициализирован.")
 
-    # initialize() вызывается автоматически при run_polling(), поэтому явный вызов здесь не нужен.
-    # try:
-    #     print("Вызов initialize() для бота...")
-    #     await application.initialize()
-    #     print("Бот инициализирован успешно.")
-    # except Exception as e:
-    #     print(f"Ошибка при инициализации бота: {e}")
-    #     return
+    # Явный вызов initialize() убран, так как run_polling() вызывает его автоматически.
+    # Это должно решить проблему с циклом событий.
 
     # Регистрируем обработчик для текстовых сообщений (НЕ команд)
     # Это предотвратит обработку команд как обычных сообщений
@@ -50,7 +43,7 @@ def main():
         # Запускаем Application в режиме опроса.
         # Этот метод блокирует выполнение до тех пор, пока бот не будет остановлен (например, Ctrl+C).
         application.run_polling(allowed_updates=Update.ALL_TYPES)
-        print("Бот остановлен.") # Эта строка выполнится после остановки бота
+        print("Бот остановлен.") # Эта строка выполнится только после остановки бота
     except Exception as e:
         print(f"Ошибка при запуске бота: {e}")
     finally:
@@ -59,7 +52,7 @@ def main():
 
 if __name__ == '__main__':
     try:
-        # Изменено: теперь вызываем main() напрямую, так как run_polling() не является асинхронным
+        # Запускаем неасинхронную функцию main
         main()
     except KeyboardInterrupt:
         print("Бот остановлен пользователем (KeyboardInterrupt).")
