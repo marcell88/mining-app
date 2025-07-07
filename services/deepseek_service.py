@@ -6,7 +6,7 @@ from config.settings import DEEPSEEK_API_KEY
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
-def deepseek_request( # Переименованная функция
+def deepseek_request(
     prompt: str,
     model: str = "deepseek-chat",
     max_tokens: int = 500,
@@ -46,8 +46,8 @@ def deepseek_request( # Переименованная функция
         }
 
     try:
-        # Устанавливаем таймаут для запроса (в данном случае 120 секунд)
-        response = requests.post(DEEPSEEK_API_URL, headers=headers, data=json.dumps(payload), timeout=120)
+        # Устанавливаем таймаут для запроса (в данном случае 60 секунд)
+        response = requests.post(DEEPSEEK_API_URL, headers=headers, data=json.dumps(payload), timeout=60)
         response.raise_for_status()
 
         response_data = response.json()
@@ -129,4 +129,3 @@ def deepseek_request( # Переименованная функция
     except Exception as e:
         print(f"Неизвестная ошибка при работе с Deepseek: {e}")
         return f"Неизвестная ошибка при работе с Deepseek: {e}"
-
