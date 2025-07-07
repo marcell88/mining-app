@@ -135,19 +135,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             final_filter_value = "Да"
             commentary_recommendations = await generate_commentary_recommendations(
                 main_message,
-                emotion_explain,
-                image_explain,
-                humor_explain,
-                surprise_explain,
-                drama_explain
+                emotion_score, emotion_explain, # Передаем все оценки и объяснения
+                image_score, image_explain,
+                humor_score, humor_explain,
+                surprise_score, surprise_explain,
+                drama_score, drama_explain
             )
         else:
             final_filter_value = "Нет"
         
         print(f"Финальная фильтрация: Сумма потенциальных баллов={total_potential_score}, Есть MAX_POTENTIAL={has_max_potential}, Результат='{final_filter_value}'")
 
-    else: # Этот else относится к if filter_value_2 == "Да"
-        # Этот блок уже не будет достигнут, так как мы возвращаемся выше, если filter_value_2 == "Нет"
+    else:
         print("Третий этап фильтрации не проводился (второй этап вернул 'Нет').")
 
 
@@ -178,9 +177,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         print(f"Сообщение НЕ отправлено в приватную группу (финальный фильтр: Нет). Объяснение: {explain_value_2}")
     
     # --- Логирование в отдельный бот (всегда) ---
-    # Этот send_log_message будет вызван, только если первый и второй фильтры были "Да",
-    # но третий фильтр (финальный) вернул "Нет", или если сообщение было отправлено
-    # в приватную группу.
     await send_log_message(
         main_message=main_message,
         message_link=message_link,
@@ -198,7 +194,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         humor_score=humor_score,
         humor_explain=humor_explain,
         surprise_score=surprise_score,
-        surprise_explain=surprise_explain,
+        surprise_explain=surprise_explain, # Исправлена опечатка
         drama_score=drama_score,
         drama_explain=drama_explain,
         is_filtered_by_stage_2=is_filtered_by_stage_2

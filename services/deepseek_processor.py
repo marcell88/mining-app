@@ -1,14 +1,15 @@
 # services/deepseek_processor.py
 from services.deepseek_service import deepseek_request
-import prompts # Изменено: импортируем модуль prompts целиком
+import prompts
 from datetime import datetime
+from config.settings import CONTEXT_THRESHOLD, MAX_POTENTIAL # Импортируем MAX_POTENTIAL
 
 async def perform_initial_filtration(main_message: str, message_link: str) -> tuple[str, str]:
     """
     Выполняет первый этап фильтрации сообщения с помощью Deepseek.
     Возвращает кортеж (filter_value_1, explain_value_1).
     """
-    deepseek_prompt_1 = f"Сообщение: {main_message}\nСсылка: {message_link}\n\n{prompts.FILTER_INSTRUCTIONS}" # Изменено
+    deepseek_prompt_1 = f"Сообщение: {main_message}\nСсылка: {message_link}\n\n{prompts.FILTER_INSTRUCTIONS}"
     
     deepseek_response_schema_1 = {
         "type": "OBJECT",
@@ -49,7 +50,7 @@ async def perform_context_filtration(main_message: str) -> tuple[str, int, str, 
     is_filtered_by_stage_2 = False # Флаг для лог-бота, чтобы знать, проводился ли 3-й этап
 
     current_date = datetime.now().strftime("%Y-%m-%d")
-    deepseek_prompt_2 = f"Текущая дата: {current_date}\nСообщение: {main_message}\n\n{prompts.CONTEXT_FILTRATION_INSTRUCTIONS}" # Изменено
+    deepseek_prompt_2 = f"Текущая дата: {current_date}\nСообщение: {main_message}\n\n{prompts.CONTEXT_FILTRATION_INSTRUCTIONS}"
 
     deepseek_response_schema_2 = {
         "type": "OBJECT",
@@ -87,8 +88,6 @@ async def perform_context_filtration(main_message: str) -> tuple[str, int, str, 
         total_score_context = sum(scores_context)
         explain_value_2 = deepseek_result_2.get("explain", "Не удалось получить объяснение (этап 2).")
         
-        # Импортируем CONTEXT_THRESHOLD из settings, чтобы использовать его здесь
-        from config.settings import CONTEXT_THRESHOLD
         if total_score_context >= CONTEXT_THRESHOLD:
             filter_value_2 = "Да"
             is_filtered_by_stage_2 = True
@@ -124,7 +123,7 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
 
     # Обработка emotion_result
     emotion_result = deepseek_request(
-        prompt=f"Текст новости: {main_message}\n\n{prompts.EMOTION_INSTRUCTIONS}", # Изменено
+        prompt=f"Текст новости: {main_message}\n\n{prompts.EMOTION_INSTRUCTIONS}",
         response_schema=evaluation_schema
     )
     if isinstance(emotion_result, dict):
@@ -139,7 +138,7 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
 
     # Обработка image_result
     image_result = deepseek_request(
-        prompt=f"Текст новости: {main_message}\n\n{prompts.IMAGE_INSTRUCTIONS}", # Изменено
+        prompt=f"Текст новости: {main_message}\n\n{prompts.IMAGE_INSTRUCTIONS}",
         response_schema=evaluation_schema
     )
     if isinstance(image_result, dict):
@@ -153,7 +152,7 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
 
     # Обработка humor_result
     humor_result = deepseek_request(
-        prompt=f"Текст новости: {main_message}\n\n{prompts.HUMOR_INSTRUCTIONS}", # Изменено
+        prompt=f"Текст новости: {main_message}\n\n{prompts.HUMOR_INSTRUCTIONS}",
         response_schema=evaluation_schema
     )
     if isinstance(humor_result, dict):
@@ -167,7 +166,7 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
 
     # Обработка surprise_result
     surprise_result = deepseek_request(
-        prompt=f"Текст новости: {main_message}\n\n{prompts.SURPRISE_INSTRUCTIONS}", # Изменено
+        prompt=f"Текст новости: {main_message}\n\n{prompts.SURPRISE_INSTRUCTIONS}",
         response_schema=evaluation_schema
     )
     if isinstance(surprise_result, dict):
@@ -181,7 +180,7 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
 
     # Обработка drama_result
     drama_result = deepseek_request(
-        prompt=f"Текст новости: {main_message}\n\n{prompts.DRAMA_INSTRUCTIONS}", # Изменено
+        prompt=f"Текст новости: {main_message}\n\n{prompts.DRAMA_INSTRUCTIONS}",
         response_schema=evaluation_schema
     )
     if isinstance(drama_result, dict):
@@ -207,45 +206,54 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
 
 async def generate_commentary_recommendations(
     main_message: str,
-    emotion_explain: str,
-    image_explain: str,
-    humor_explain: str,
-    surprise_explain: str,
-    drama_explain: str
+    emotion_score: int, emotion_explain: str,
+    image_score: int, image_explain: str,
+    humor_score: int, humor_explain: str,
+    surprise_score: int, surprise_explain: str,
+    drama_score: int, drama_explain: str
 ) -> str:
     """
     Генерирует рекомендации по написанию художественного комментария к новости
-    на основе объяснений Deepseek по различным характеристикам.
+    на основе объяснений Deepseek по высокобалльным характеристикам.
     """
-    combined_explains = (
-        f"Эмоциональная яркость: {emotion_explain}\n"
-        f"Образность: {image_explain}\n"
-        f"Юмор: {humor_explain}\n"
-        f"Неожиданность: {surprise_explain}\n"
-        f"Драматичность: {drama_explain}\n"
-    )
+    # Собираем характеристики с их баллами и объяснениями
+    characteristics = {
+        "Эмоциональная яркость": {"score": emotion_score, "explain": emotion_explain},
+        "Образность": {"score": image_score, "explain": image_explain},
+        "Юмор": {"score": humor_score, "explain": humor_explain},
+        "Неожиданность": {"score": surprise_score, "explain": surprise_explain},
+        "Драматичность": {"score": drama_score, "explain": drama_explain},
+    }
 
-    commentary_prompt = (
-        f"На основе следующей новости и анализа ее характеристик, напиши рекомендации "
-        f"для создания художественного комментария. Сфокусируйся на том, что в новости "
-        f"рождает особенно большой интерес для читателя, делая упор на эмоциональную яркость, "
-        f"образность, юмор, неожиданность и драматичность. Избегай прямого цитирования новости, "
-        f"перефразируй и интерпретируй.\n\n"
-        f"Новость: {main_message}\n\n"
-        f"Анализ характеристик:\n{combined_explains}\n\n"
-        f"Рекомендации:"
+    high_scoring_characteristics_info = []
+    for name, data in characteristics.items():
+        if data["score"] >= MAX_POTENTIAL: # Используем MAX_POTENTIAL из config.settings
+            high_scoring_characteristics_info.append(
+                f"- {name} (Балл: {data['score']}): {data['explain']}"
+            )
+    
+    if not high_scoring_characteristics_info:
+        # Если нет высокобалльных характеристик, можно вернуть общую рекомендацию
+        # или указать, что нет ярко выраженных особенностей.
+        return "Не обнаружено ярко выраженных характеристик для специальных рекомендаций."
+
+    combined_explains_for_prompt = "\n".join(high_scoring_characteristics_info)
+
+    # Используем промпт из prompts.py и форматируем его
+    commentary_prompt = prompts.COMMENTARY_RECOMMENDATIONS_INSTRUCTIONS.format(
+        main_message=main_message,
+        combined_explains_for_prompt=combined_explains_for_prompt
     )
 
     print(f"Отправка запроса к Deepseek для генерации рекомендаций: '{commentary_prompt[:100]}...'")
     recommendations_result = deepseek_request(
         prompt=commentary_prompt,
-        max_tokens=300 # Ограничим длину рекомендаций
+        max_tokens=200 # Уменьшаем max_tokens для более короткого ответа (примерно 50 токенов на предложение)
     )
 
     if isinstance(recommendations_result, str):
         return recommendations_result
     else:
-        # Если Deepseek вернул словарь, но мы ожидали строку, или произошла другая ошибка
         print(f"Ошибка при получении рекомендаций от Deepseek: {recommendations_result}")
         return "Не удалось сгенерировать рекомендации."
 
