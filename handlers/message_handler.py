@@ -1,9 +1,8 @@
 # handlers/message_handler.py
 from telegram import Update, Bot
 from telegram.ext import ContextTypes
-from config.settings import PRIVATE_GROUP_CHAT_ID, LOGGING_BOT_TOKEN, LOGGING_CHAT_ID, CONTEXT_THRESHOLD, MAX_POTENTIAL, SUM_POTENTIAL # CONTEXT_THRESHOLD, MAX_POTENTIAL, SUM_POTENTIAL остаются здесь, так как используются для логики фильтрации
+from config.settings import PRIVATE_GROUP_CHAT_ID, CONTEXT_THRESHOLD, MAX_POTENTIAL, SUM_POTENTIAL
 from services.database_service import increment_incoming_messages, increment_outgoing_messages
-# from services.deepseek_service import deepseek_request # Больше не нужен прямой импорт здесь
 from services.telegram_logger import send_log_message
 from services.deepseek_processor import (
     perform_initial_filtration,
@@ -11,10 +10,7 @@ from services.deepseek_processor import (
     evaluate_characteristics,
     generate_commentary_recommendations
 )
-import html # Оставлен для html.escape в send_log_message, но send_log_message теперь экранирует сама
-
-# Удалены импорты из prompts, так как они теперь используются в deepseek_processor.py
-# Удален импорт datetime, так как он теперь используется в deepseek_processor.py
+import html
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -51,9 +47,65 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     filter_value_1, explain_value_1 = await perform_initial_filtration(main_message, message_link)
     # --- Конец первого этапа фильтрации ---
 
+    # Если первый фильтр вернул "Нет", прекращаем дальнейшую обработку
+    if filter_value_1 == "Нет":
+        print(f"Сообщение НЕ прошло первичную фильтрацию. Причина: {explain_value_1}")
+        # Логируем результат первого этапа и завершаем функцию
+        await send_log_message(
+            main_message=main_message,
+            message_link=message_link,
+            filter_value_1=filter_value_1,
+            explain_value_1=explain_value_1,
+            filter_value_2="Не проводился", # Указываем, что второй этап не проводился
+            total_score_context=0,
+            explain_value_2="Не проводился", # Указываем, что второй этап не проводился
+            final_filter_value="Нет", # Финальный фильтр тоже "Нет"
+            total_potential_score=0,
+            emotion_score=0,
+            emotion_explain="Не проводился",
+            image_score=0,
+            image_explain="Не проводился",
+            humor_score=0,
+            humor_explain="Не проводился",
+            surprise_score=0,
+            surprise_explain="Не проводился",
+            drama_score=0,
+            drama_explain="Не проводился",
+            is_filtered_by_stage_2=False # Флаг, что 3-й этап не проводился
+        )
+        return # Завершаем выполнение функции
+
     # --- Второй этап фильтрации (Context Filtration) ---
     filter_value_2, total_score_context, explain_value_2, is_filtered_by_stage_2 = await perform_context_filtration(main_message)
     # --- Конец второго этапа фильтрации ---
+
+    # Если второй фильтр вернул "Нет", прекращаем дальнейшую обработку
+    if filter_value_2 == "Нет":
+        print(f"Сообщение НЕ прошло контекстную фильтрацию. Причина: {explain_value_2}")
+        # Логируем результат второго этапа и завершаем функцию
+        await send_log_message(
+            main_message=main_message,
+            message_link=message_link,
+            filter_value_1=filter_value_1, # Первый фильтр был "Да"
+            explain_value_1=explain_value_1, # Объяснение первого фильтра
+            filter_value_2=filter_value_2, # Второй фильтр был "Нет"
+            total_score_context=total_score_context, # Фактический балл второго этапа
+            explain_value_2=explain_value_2, # Объяснение второго фильтра
+            final_filter_value="Нет", # Финальный фильтр тоже "Нет"
+            total_potential_score=0,
+            emotion_score=0,
+            emotion_explain="Не проводился",
+            image_score=0,
+            image_explain="Не проводился",
+            humor_score=0,
+            humor_explain="Не проводился",
+            surprise_score=0,
+            surprise_explain="Не проводился",
+            drama_score=0,
+            drama_explain="Не проводился",
+            is_filtered_by_stage_2=False # Флаг, что 3-й этап не проводился
+        )
+        return # Завершаем выполнение функции
 
     # --- Третий этап: Оценка эмоциональных и стилистических характеристик ---
     emotion_score, emotion_explain = 0, "N/A"
@@ -65,9 +117,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     final_filter_value = "Нет"
     total_potential_score = 0
     potential_scores_list = []
-    commentary_recommendations = "Рекомендации пока отсутствуют." # Инициализация для рекомендаций
+    commentary_recommendations = "Рекомендации пока отсутствуют."
 
-    if filter_value_2 == "Да":
+    if filter_value_2 == "Да": # Этот блок выполняется, только если второй фильтр был "Да"
         print("Начало третьего этапа фильтрации (оценка характеристик)...")
         (
             emotion_score, emotion_explain,
@@ -78,11 +130,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             total_potential_score, potential_scores_list
         ) = await evaluate_characteristics(main_message)
 
-        # MAX_POTENTIAL и SUM_POTENTIAL импортируются из config.settings в начале файла
         has_max_potential = any(score >= MAX_POTENTIAL for score in potential_scores_list if isinstance(score, int))
         if total_potential_score >= SUM_POTENTIAL and has_max_potential:
             final_filter_value = "Да"
-            # Если фильтр пройден, генерируем рекомендации
             commentary_recommendations = await generate_commentary_recommendations(
                 main_message,
                 emotion_explain,
@@ -96,7 +146,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         print(f"Финальная фильтрация: Сумма потенциальных баллов={total_potential_score}, Есть MAX_POTENTIAL={has_max_potential}, Результат='{final_filter_value}'")
 
-    else:
+    else: # Этот else относится к if filter_value_2 == "Да"
+        # Этот блок уже не будет достигнут, так как мы возвращаемся выше, если filter_value_2 == "Нет"
         print("Третий этап фильтрации не проводился (второй этап вернул 'Нет').")
 
 
@@ -127,6 +178,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         print(f"Сообщение НЕ отправлено в приватную группу (финальный фильтр: Нет). Объяснение: {explain_value_2}")
     
     # --- Логирование в отдельный бот (всегда) ---
+    # Этот send_log_message будет вызван, только если первый и второй фильтры были "Да",
+    # но третий фильтр (финальный) вернул "Нет", или если сообщение было отправлено
+    # в приватную группу.
     await send_log_message(
         main_message=main_message,
         message_link=message_link,
