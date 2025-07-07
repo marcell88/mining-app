@@ -4,7 +4,8 @@ import json
 import re
 from config.settings import DEEPSEEK_API_KEY
 
-DEEPSEEK_API_URL = "[https://api.deepseek.com/chat/completions](https://api.deepseek.com/chat/completions)"
+# Исправлено: URL теперь является простой строкой, а не Markdown-ссылкой
+DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 def deepseek_request(
     prompt: str,
