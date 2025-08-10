@@ -65,10 +65,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             emotion_explain="Не проводился",
             image_score=0,
             image_explain="Не проводился",
-            humor_score=0,
-            humor_explain="Не проводился",
-            surprise_score=0,
-            surprise_explain="Не проводился",
+            heroes_score=0,
+            heroes_explain="Не проводился",
+            actual_score=0,
+            actual_explain="Не проводился",
             drama_score=0,
             drama_explain="Не проводился",
             is_filtered_by_stage_2=False # Флаг, что 3-й этап не проводился
@@ -97,10 +97,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             emotion_explain="Не проводился",
             image_score=0,
             image_explain="Не проводился",
-            humor_score=0,
-            humor_explain="Не проводился",
-            surprise_score=0,
-            surprise_explain="Не проводился",
+            heroes_score=0,
+            heroes_explain="Не проводился",
+            actual_score=0,
+            actual_explain="Не проводился",
             drama_score=0,
             drama_explain="Не проводился",
             is_filtered_by_stage_2=False # Флаг, что 3-й этап не проводился
@@ -110,8 +110,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # --- Третий этап: Оценка эмоциональных и стилистических характеристик ---
     emotion_score, emotion_explain = 0, "N/A"
     image_score, image_explain = 0, "N/A"
-    humor_score, humor_explain = 0, "N/A"
-    surprise_score, surprise_explain = 0, "N/A"
+    heroes_score, heroes_explain = 0, "N/A"
+    actual_score, actual_explain = 0, "N/A"
     drama_score, drama_explain = 0, "N/A"
 
     final_filter_value = "Нет"
@@ -124,8 +124,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         (
             emotion_score, emotion_explain,
             image_score, image_explain,
-            humor_score, humor_explain,
-            surprise_score, surprise_explain,
+            heroes_score, heroes_explain,
+            actual_score, actual_explain,
             drama_score, drama_explain,
             total_potential_score, potential_scores_list
         ) = await evaluate_characteristics(main_message)
@@ -137,8 +137,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 main_message,
                 emotion_score, emotion_explain, # Передаем все оценки и объяснения
                 image_score, image_explain,
-                humor_score, humor_explain,
-                surprise_score, surprise_explain,
+                heroes_score, heroes_explain,
+                actual_score, actual_explain,
                 drama_score, drama_explain
             )
         else:
@@ -160,8 +160,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             f"Общий потенциал: {total_potential_score}\n"
             f"1. Эмоции: {emotion_score}\n"
             f"2. Образность: {image_score}\n"
-            f"3. Юмор: {humor_score}\n"
-            f"4. Неожиданность: {surprise_score}\n"
+            f"3. Герои: {heroes_score}\n"
+            f"4. Актуальность: {actual_score}\n"
             f"5. Драма: {drama_score}\n\n"
             f"1111\n\n"
             f"Рекомендации: {commentary_recommendations}"
@@ -191,10 +191,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         emotion_explain=emotion_explain,
         image_score=image_score,
         image_explain=image_explain,
-        humor_score=humor_score,
-        humor_explain=humor_explain,
-        surprise_score=surprise_score,
-        surprise_explain=surprise_explain, # Исправлена опечатка
+        heroes_score=heroes_score,
+        heroes_explain=heroes_explain,
+        actual_score=actual_score,
+        actual_explain=actual_explain,
         drama_score=drama_score,
         drama_explain=drama_explain,
         is_filtered_by_stage_2=is_filtered_by_stage_2

@@ -29,10 +29,10 @@ async def send_log_message(
     emotion_explain: str,
     image_score: int,
     image_explain: str,
-    humor_score: int,
-    humor_explain: str,
-    surprise_score: int,
-    surprise_explain: str,
+    heroes_score: int,
+    heroes_explain: str,
+    actual_score: int,
+    sactual_explain: str,
     drama_score: int,
     drama_explain: str,
     is_filtered_by_stage_2: bool
@@ -54,8 +54,8 @@ async def send_log_message(
         # Экранированные значения для оценок характеристик (только баллы, без объяснений)
         escaped_emotion_score = html.escape(str(emotion_score))
         escaped_image_score = html.escape(str(image_score))
-        escaped_humor_score = html.escape(str(humor_score))
-        escaped_surprise_score = html.escape(str(surprise_score))
+        escaped_heroes_score = html.escape(str(heroes_score))
+        escaped_actual_score = html.escape(str(actual_score))
         escaped_drama_score = html.escape(str(drama_score))
 
         log_message_text = (
@@ -74,8 +74,8 @@ async def send_log_message(
                 f"--- Оценки характеристик ---\n"
                 f"Эмоциональная яркость: {escaped_emotion_score}\n"
                 f"Образность: {escaped_image_score}\n"
-                f"Юмор: {escaped_humor_score}\n"
-                f"Неожиданность: {escaped_surprise_score}\n"
+                f"Герои: {escaped_heroes_score}\n"
+                f"Актуальность: {escaped_actual_score}\n"
                 f"Драматичность: {escaped_drama_score}\n\n"
                 f"Финальный фильтр: {html.escape(final_filter_value)}\n"
                 f"Сумма потенциальных баллов: {html.escape(str(total_potential_score))}\n"

@@ -85,7 +85,7 @@ async def perform_context_filtration(main_message: str) -> tuple[str, int, str, 
             deepseek_result_2.get("reason", 0),
             deepseek_result_2.get("consequences", 0)
         ]
-        total_score_context = sum(scores_context)
+        total_score_context = sum(scores_context) / 8
         explain_value_2 = deepseek_result_2.get("explain", "Не удалось получить объяснение (этап 2).")
         
         if total_score_context >= CONTEXT_THRESHOLD:
@@ -108,8 +108,8 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
     """
     emotion_score, emotion_explain = 0, "N/A"
     image_score, image_explain = 0, "N/A"
-    humor_score, humor_explain = 0, "N/A"
-    surprise_score, surprise_explain = 0, "N/A"
+    heroes_score, heroes_explain = 0, "N/A"
+    actual_score, actual_explain = 0, "N/A"
     drama_score, drama_explain = 0, "N/A"
 
     evaluation_schema = {
@@ -150,33 +150,33 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
         image_score = 0
     print(f"Образность: {image_score}, Объяснение: {str(image_explain)[:50]}...")
 
-    # Обработка humor_result
-    humor_result = deepseek_request(
-        prompt=f"Текст новости: {main_message}\n\n{prompts.HUMOR_INSTRUCTIONS}",
+    # Обработка heroes_instruction
+    heroes_result = deepseek_request(
+        prompt=f"Текст новости: {main_message}\n\n{prompts.HEROES_INSTRUCTIONS}",
         response_schema=evaluation_schema
     )
-    if isinstance(humor_result, dict):
-        humor_score = humor_result.get("score", 0)
-        humor_explain = humor_result.get("explain", "Не получено объяснение.")
+    if isinstance(heroes_result, dict):
+        heroes_score = heroes_result.get("score", 0)
+        heroes_explain = heroes_result.get("explain", "Не получено объяснение.")
     else:
-        print(f"Ошибка при оценке юмора: {humor_result}")
-        humor_explain = str(humor_result)
-        humor_score = 0
-    print(f"Юмор: {humor_score}, Объяснение: {str(humor_explain)[:50]}...")
+        print(f"Ошибка при оценке юмора: {heroes_result}")
+        heroes_explain = str(heroes_result)
+        heroes_explain = 0
+    print(f"Юмор: {heroes_explain}, Объяснение: {str(heroes_explain)[:50]}...")
 
-    # Обработка surprise_result
-    surprise_result = deepseek_request(
-        prompt=f"Текст новости: {main_message}\n\n{prompts.SURPRISE_INSTRUCTIONS}",
+    # Обработка actual_result
+    actual_result = deepseek_request(
+        prompt=f"Текст новости: {main_message}\n\n{prompts.ACTUAL_INSTRUCTIONS}",
         response_schema=evaluation_schema
     )
-    if isinstance(surprise_result, dict):
-        surprise_score = surprise_result.get("score", 0)
-        surprise_explain = surprise_result.get("explain", "Не получено объяснение.")
+    if isinstance(actual_result, dict):
+        actual_score = actual_result.get("score", 0)
+        actual_explain = actual_result.get("explain", "Не получено объяснение.")
     else:
-        print(f"Ошибка при оценке неожиданности: {surprise_result}")
-        surprise_explain = str(surprise_result)
-        surprise_score = 0
-    print(f"Неожиданность: {surprise_score}, Объяснение: {str(surprise_explain)[:50]}...")
+        print(f"Ошибка при оценке неожиданности: {actual_result}")
+        actual_explain = str(actual_result)
+        actual_score = 0
+    print(f"Неожиданность: {actual_score}, Объяснение: {str(actual_explain)[:50]}...")
 
     # Обработка drama_result
     drama_result = deepseek_request(
@@ -192,14 +192,14 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
         drama_score = 0
     print(f"Драматичность: {drama_score}, Объяснение: {str(drama_explain)[:50]}...")
     
-    potential_scores_list = [emotion_score, image_score, humor_score, surprise_score, drama_score]
+    potential_scores_list = [emotion_score, image_score, heroes_score, actual_score, drama_score]
     total_potential_score = sum(s for s in potential_scores_list if isinstance(s, int))
 
     return (
         emotion_score, emotion_explain,
         image_score, image_explain,
-        humor_score, humor_explain,
-        surprise_score, surprise_explain,
+        heroes_score, heroes_explain,
+        actual_score, actual_explain,
         drama_score, drama_explain,
         total_potential_score, potential_scores_list
     )
@@ -208,8 +208,8 @@ async def generate_commentary_recommendations(
     main_message: str,
     emotion_score: int, emotion_explain: str,
     image_score: int, image_explain: str,
-    humor_score: int, humor_explain: str,
-    surprise_score: int, surprise_explain: str,
+    heroes_score: int, heroes_explain: str,
+    actual_score: int, actual_explain: str,
     drama_score: int, drama_explain: str
 ) -> str:
     """
@@ -220,8 +220,8 @@ async def generate_commentary_recommendations(
     characteristics = {
         "Эмоциональная яркость": {"score": emotion_score, "explain": emotion_explain},
         "Образность": {"score": image_score, "explain": image_explain},
-        "Юмор": {"score": humor_score, "explain": humor_explain},
-        "Неожиданность": {"score": surprise_score, "explain": surprise_explain},
+        "Герои": {"score": heroes_score, "explain": heroes_explain},
+        "Актуальность": {"score": actual_score, "explain": actual_explain},
         "Драматичность": {"score": drama_score, "explain": drama_explain},
     }
 
