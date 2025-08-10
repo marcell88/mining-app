@@ -193,7 +193,7 @@ async def evaluate_characteristics(main_message: str) -> tuple[int, str, int, st
     print(f"Драматичность: {drama_score}, Объяснение: {str(drama_explain)[:50]}...")
     
     potential_scores_list = [emotion_score, image_score, heroes_score, actual_score, drama_score]
-    total_potential_score = sum(s for s in potential_scores_list if isinstance(s, int))
+    total_potential_score = sum(s for s in potential_scores_list if isinstance(s, int)) / 5
 
     return (
         emotion_score, emotion_explain,
