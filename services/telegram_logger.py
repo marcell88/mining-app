@@ -32,7 +32,7 @@ async def send_log_message(
     heroes_score: int,
     heroes_explain: str,
     actual_score: int,
-    sactual_explain: str,
+    actual_explain: str,
     drama_score: int,
     drama_explain: str,
     is_filtered_by_stage_2: bool
