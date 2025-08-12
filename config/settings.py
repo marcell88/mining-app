@@ -26,7 +26,7 @@ CONTEXT_THRESHOLD = int(os.getenv("CONTEXT_THRESHOLD", 6))
 
 # Новые константы для финальной фильтрации
 MAX_POTENTIAL = int(os.getenv("MAX_POTENTIAL", 8)) # Порог для одной из оценок (эмоции, образность и т.д.)
-SUM_POTENTIAL = int(os.getenv("SUM_POTENTIAL", 6)) # Порог для суммы всех 5 оценок
+SUM_POTENTIAL = float(os.getenv("SUM_POTENTIAL", 6.5)) # Порог для суммы всех 5 оценок
 
 
 # Проверяем, что все необходимые переменные загружены
